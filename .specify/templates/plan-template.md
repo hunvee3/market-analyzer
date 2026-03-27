@@ -31,7 +31,20 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify the following before proceeding:
+
+- [ ] **Hexagonal Architecture**: Feature is split into domain / application / infrastructure
+      layers on both frontend and backend. Use cases exist for every operation.
+- [ ] **TDD**: Tests are written before implementation. All unit tests mock external dependencies.
+      Test descriptions follow Given/When/Then. Tests confirmed failing before code is written.
+- [ ] **Error Handling**: All API error responses conform to the standard or validation error
+      contracts defined in the constitution. No custom error shapes introduced.
+- [ ] **Frontend Stack**: React + TypeScript + MUI + styled-components. Jotai for global/shared
+      state (Zustand and other global state libs are not permitted). date-fns for dates.
+      Styling rule (>3 props → external file). Mock API present if backend not ready.
+- [ ] **Backend Stack**: Fastify + TypeScript. RESTful JSON APIs. PostgreSQL + Lucid ORM.
+- [ ] **Branching**: Feature branches follow Git Flow. Branch created from correct base
+      (epic branch or develop).
 
 ## Project Structure
 
