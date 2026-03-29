@@ -1,17 +1,19 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 → 1.1.0 (MINOR — material new constraint added to Frontend Tech Stack)
+Version change: 1.1.0 → 1.2.0 (MINOR — two new Frontend Tech Stack sub-rules added)
 Modified principles:
-  - IV. Frontend Tech Stack: added explicit state management mandate (Jotai MUST be used;
-    Zustand and other global state libraries are not permitted)
+  - IV. Frontend Tech Stack:
+      • Added keyboard form submission rule (forms MUST use <form onSubmit>, not button-click only)
+      • Added jsdom polyfill rule (missing browser APIs MUST be polyfilled in tests/setup.ts)
 Added sections: none
 Removed sections: none
+Rationale: Learnings from 001-grocery-list-manager implementation — keyboard navigation was
+  retrofitted rather than built first-class; scrollIntoView broke tests because the jsdom
+  gap was discovered late rather than handled upfront in setup.
 Templates updated:
   ✅ .specify/memory/constitution.md (this file)
-  ✅ .specify/templates/plan-template.md (Constitution Check — Frontend Stack gate updated)
-  ⚠  .specify/templates/spec-template.md — no structural changes required
-  ⚠  .specify/templates/tasks-template.md — no structural changes required
+  ⚠  .specify/templates/plan-template.md — consider adding jsdom polyfill to setup task
   ⚠  CLAUDE.md — auto-generated; will be refreshed on next /speckit.plan run
 Deferred TODOs: none
 -->
@@ -107,7 +109,11 @@ The frontend MUST be a Progressive Web App (PWA) built with **React** and **Type
 - **Linting**: ESLint rules for `react` and `react-hooks` are mandatory on all frontend code.
 - **Accessibility & UX**: All components MUST comply with WCAG 2.1 AA. Semantic HTML,
   ARIA attributes, and keyboard navigation MUST be implemented as first-class concerns,
-  not retrofitted.
+  not retrofitted. Forms MUST be keyboard-navigable and submittable via Enter key
+  (use `<form onSubmit>` with `e.preventDefault()` — do not rely on button click alone).
+- **Test environment**: jsdom does not implement all browser APIs. Any missing native
+  browser method (e.g., `scrollIntoView`, `ResizeObserver`) MUST be polyfilled in the
+  global test setup file (`tests/setup.ts`), not silenced with try/catch in component code.
 
 ### V. Backend Tech Stack
 
@@ -162,4 +168,4 @@ This project MUST follow **Git Flow**.
 - Version policy: MAJOR for incompatible governance changes or principle removals;
   MINOR for new principles or material expansions; PATCH for clarifications or wording.
 
-**Version**: 1.1.0 | **Ratified**: 2026-03-27 | **Last Amended**: 2026-03-27
+**Version**: 1.2.0 | **Ratified**: 2026-03-27 | **Last Amended**: 2026-03-27
