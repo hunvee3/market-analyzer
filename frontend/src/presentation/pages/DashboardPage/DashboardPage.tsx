@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { Button, Typography } from '@mui/material'
 import { GroceryListCard } from '@presentation/components/GroceryListCard/GroceryListCard'
 import { SearchBar } from '@presentation/components/SearchBar/SearchBar'
 import { GroceryListModal } from '@presentation/components/GroceryListModal/GroceryListModal'
@@ -9,7 +8,16 @@ import { GetAllGroceryListsUseCase } from '@application/grocery-list/use-cases/G
 import { DeleteGroceryListUseCase } from '@application/grocery-list/use-cases/DeleteGroceryList.usecase'
 import { groceryListRepository } from '@di/container'
 import { useSnackbar } from '@presentation/context/SnackbarContext'
-import { PageContainer, PageHeader, ListsGrid, EmptyState } from './DashboardPage.styles'
+import {
+  pageContainer,
+  pageHeader,
+  pageTitle,
+  btnCreateNew,
+  listsGrid,
+  emptyState,
+  emptyStateText,
+  btnCreateNewOutline,
+} from './DashboardPage.styles'
 
 const getAllListsUseCase = new GetAllGroceryListsUseCase(groceryListRepository)
 const deleteListUseCase = new DeleteGroceryListUseCase(groceryListRepository)
@@ -70,30 +78,26 @@ export function DashboardPage() {
   }
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <Typography variant="h4" component="h1">
-          My Grocery Lists
-        </Typography>
-        <Button variant="contained" onClick={handleCreateNew}>
+    <main className={pageContainer}>
+      <div className={pageHeader}>
+        <h1 className={pageTitle}>My Grocery Lists</h1>
+        <button className={btnCreateNew} onClick={handleCreateNew}>
           Create New List
-        </Button>
-      </PageHeader>
+        </button>
+      </div>
 
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
       <div aria-live="polite" aria-atomic="false">
         {filteredLists.length === 0 ? (
-          <EmptyState>
-            <Typography variant="body1" color="text.secondary">
-              No grocery lists yet. Create one to get started!
-            </Typography>
-            <Button variant="outlined" onClick={handleCreateNew}>
+          <div className={emptyState}>
+            <p className={emptyStateText}>No grocery lists yet. Create one to get started!</p>
+            <button className={btnCreateNewOutline} onClick={handleCreateNew}>
               Create New List
-            </Button>
-          </EmptyState>
+            </button>
+          </div>
         ) : (
-          <ListsGrid>
+          <div className={listsGrid}>
             {filteredLists.map((list) => (
               <GroceryListCard
                 key={list.id}
@@ -103,7 +107,7 @@ export function DashboardPage() {
                 onPurchase={handlePurchase}
               />
             ))}
-          </ListsGrid>
+          </div>
         )}
       </div>
 
@@ -112,6 +116,6 @@ export function DashboardPage() {
         onClose={handleModalClose}
         initialList={activeList}
       />
-    </PageContainer>
+    </main>
   )
 }

@@ -1,22 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Typography,
-  IconButton,
-  Chip,
-  Box,
-  Collapse,
-} from '@mui/material'
-import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import CloseIcon from '@mui/icons-material/Close'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { Dialog, DialogPanel, DialogTitle, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
+import { XMarkIcon, PencilIcon, TrashIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/20/solid'
+import { clsx } from 'clsx'
 import { useAtom, useSetAtom } from 'jotai'
 import type { GroceryList } from '@domain/grocery-list/GroceryList'
 import type { NewItemInput } from '@application/grocery-list/use-cases/use-case-types'
@@ -30,34 +15,59 @@ import { GetAllCategoriesUseCase } from '@application/grocery-list/use-cases/Get
 import { groceryListRepository, categoryRepository } from '@di/container'
 import { useSnackbar } from '@presentation/context/SnackbarContext'
 import {
-  ModalContent,
-  ItemsSection,
-  CategoryGroup,
-  CategoryHeader,
-  ItemRow,
-  ItemActions,
+  fullScreenPanel,
+  modalHeader,
+  modalTitleInput,
+  modalTitleInputError,
+  btnClose,
+  modalBody,
+  itemsSection,
+  itemsSectionHeader,
+  itemsSectionTitle,
+  itemsBadge,
+  errorInline,
+  categoryGroup,
+  categoryGroupHeader,
+  categoryChip,
+  categoryCount,
+  chevronIcon,
+  chevronOpen,
+  itemsGroupBody,
+  itemRow,
+  itemRowText,
+  itemName,
+  itemUnit,
+  itemActions,
+  btnIconEdit,
+  btnIconDelete,
+  btnAddItem,
+  modalFooter,
+  btnModalCancel,
+  btnModalSave,
+  itemDialogPanel,
+  itemDialogHeader,
+  itemDialogTitle,
 } from './GroceryListModal.styles'
 
 const createListUseCase = new CreateGroceryListUseCase(groceryListRepository)
 const updateListUseCase = new UpdateGroceryListUseCase(groceryListRepository)
 const getAllCategoriesUseCase = new GetAllCategoriesUseCase(categoryRepository)
 
-const CATEGORY_COLORS = [
-  '#1976d2',
-  '#7b1fa2',
-  '#2e7d32',
-  '#e65100',
-  '#c62828',
-  '#00838f',
-  '#ad1457',
-  '#558b2f',
-  '#f57f17',
-  '#4527a0',
+// A small palette of accent colors used for category chips/borders
+const CATEGORY_ACCENTS = [
+  { bg: 'bg-indigo-500/20 text-indigo-300', border: 'border-indigo-500' },
+  { bg: 'bg-violet-500/20 text-violet-300', border: 'border-violet-500' },
+  { bg: 'bg-emerald-500/20 text-emerald-300', border: 'border-emerald-500' },
+  { bg: 'bg-amber-500/20 text-amber-300', border: 'border-amber-500' },
+  { bg: 'bg-rose-500/20 text-rose-300', border: 'border-rose-500' },
+  { bg: 'bg-cyan-500/20 text-cyan-300', border: 'border-cyan-500' },
+  { bg: 'bg-pink-500/20 text-pink-300', border: 'border-pink-500' },
+  { bg: 'bg-lime-500/20 text-lime-300', border: 'border-lime-500' },
 ]
 
-function getCategoryColor(categoryName: string, allCategoryNames: string[]): string {
-  const index = allCategoryNames.indexOf(categoryName)
-  return CATEGORY_COLORS[(index < 0 ? 0 : index) % CATEGORY_COLORS.length]
+function getAccent(categoryName: string, allNames: string[]) {
+  const idx = allNames.indexOf(categoryName)
+  return CATEGORY_ACCENTS[(idx < 0 ? 0 : idx) % CATEGORY_ACCENTS.length]
 }
 
 interface PendingItem {
@@ -79,7 +89,6 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
   const { showError } = useSnackbar()
 
   const setLists = useSetAtom(groceryListsAtom)
-  // Single source of truth — categoriesAtom is updated by CategoryAutocomplete and ItemSubForm
   const [categories, setCategories] = useAtom(categoriesAtom)
 
   const [name, setName] = useState(initialList?.name ?? '')
@@ -89,7 +98,6 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
   const [nameError, setNameError] = useState(false)
   const [itemsError, setItemsError] = useState(false)
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false)
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
 
   const isDirty = name !== (initialList?.name ?? '') || items.length > 0
 
@@ -103,28 +111,29 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
     setUnsavedDialogOpen(false)
     setItems([])
 
-    getAllCategoriesUseCase.execute().then((cats) => {
-      setCategories(cats)
-
-      if (initialList && initialList.items.length > 0) {
-        setItems(
-          initialList.items.map((item) => {
-            const cat = cats.find((c) => c.id === item.categoryId)
-            return {
-              id: item.id,
-              name: item.name,
-              unit: item.unit,
-              categoryId: item.categoryId,
-              categoryName: cat?.name ?? item.categoryId,
-            }
-          }),
-        )
-      }
-    }).catch(() => {/* no-op */})
+    getAllCategoriesUseCase
+      .execute()
+      .then((cats) => {
+        setCategories(cats)
+        if (initialList && initialList.items.length > 0) {
+          setItems(
+            initialList.items.map((item) => {
+              const cat = cats.find((c) => c.id === item.categoryId)
+              return {
+                id: item.id,
+                name: item.name,
+                unit: item.unit,
+                categoryId: item.categoryId,
+                categoryName: cat?.name ?? item.categoryId,
+              }
+            }),
+          )
+        }
+      })
+      .catch(() => {/* no-op */})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialList])
 
-  // Stable ordered list of unique category names for color assignment
   const categoryNames = useMemo(() => {
     const seen = new Set<string>()
     const ordered: string[] = []
@@ -208,10 +217,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
       )
       setEditingItemId(null)
     } else {
-      setItems((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), ...newItem, categoryName },
-      ])
+      setItems((prev) => [...prev, { id: crypto.randomUUID(), ...newItem, categoryName }])
     }
     setAddingItem(false)
     setItemsError(false)
@@ -227,168 +233,164 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
   }
 
   const editingItem = editingItemId ? items.find((i) => i.id === editingItemId) : null
-  // Look up from categoriesAtom (always up to date, including newly created categories)
   const editingCategory = editingItem
     ? (categories.find((c) => c.id === editingItem.categoryId) ?? null)
     : null
 
   return (
     <>
-      <Dialog
-        open={open}
-        onClose={handleCloseAttempt}
-        fullScreen
-        aria-labelledby="list-modal-title"
-      >
-        <DialogTitle
-          id="list-modal-title"
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
-        >
-          <Typography variant="h6" component="span">
-            {isEdit ? 'Edit Grocery List' : 'Create Grocery List'}
-          </Typography>
-          <IconButton aria-label="close" onClick={handleCloseAttempt} edge="end">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <ModalContent>
-            <TextField
-              label="List Name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                setNameError(false)
-              }}
-              error={nameError}
-              helperText={nameError ? 'List name is required' : undefined}
-              inputProps={{ 'aria-label': 'List Name' }}
-              fullWidth
-              autoFocus
-            />
-
-            <ItemsSection>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Items
-                </Typography>
-                {items.length > 0 && (
-                  <Chip label={items.length} size="small" color="primary" />
-                )}
-              </Box>
-
-              {itemsError && (
-                <Typography color="error" variant="body2">
-                  At least one item is required
-                </Typography>
+      <Dialog open={open} onClose={handleCloseAttempt} className="relative z-50">
+        <div className={fullScreenPanel}>
+          <DialogPanel className="flex flex-col h-full">
+            {/* Header */}
+            <div className={modalHeader}>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setNameError(false)
+                }}
+                aria-label="List Name"
+                placeholder="List name…"
+                className={clsx(modalTitleInput, nameError && modalTitleInputError)}
+              />
+              {nameError && (
+                <span className="text-xs text-red-400 mr-2 shrink-0">Name required</span>
               )}
-
-              {Array.from(groupedItems.entries()).map(([categoryName, catItems]) => {
-                const color = getCategoryColor(categoryName, categoryNames)
-                const isCollapsed = collapsedCategories.has(categoryName)
-                return (
-                  <CategoryGroup key={categoryName}>
-                    <CategoryHeader
-                      onClick={() => setCollapsedCategories((prev) => {
-                        const next = new Set(prev)
-                        if (next.has(categoryName)) next.delete(categoryName)
-                        else next.add(categoryName)
-                        return next
-                      })}
-                    >
-                      <Chip
-                        label={categoryName}
-                        size="small"
-                        sx={{
-                          bgcolor: color,
-                          color: '#fff',
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-                        {catItems.length}
-                      </Typography>
-                      <Box sx={{ ml: 'auto', display: 'flex', color: 'text.secondary' }}>
-                        {isCollapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
-                      </Box>
-                    </CategoryHeader>
-                    <Collapse in={!isCollapsed}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {catItems.map((item) => (
-                        <ItemRow key={item.id} $accentColor={color}>
-                          <Box>
-                            <Typography variant="body2" fontWeight={500}>
-                              {item.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {item.unit}
-                            </Typography>
-                          </Box>
-                          <ItemActions>
-                            <IconButton
-                              size="small"
-                              aria-label="Edit item"
-                              onClick={(e) => { e.stopPropagation(); handleEditItem(item.id) }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              aria-label="Remove item"
-                              color="error"
-                              onClick={(e) => { e.stopPropagation(); handleRemoveItem(item.id) }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </ItemActions>
-                        </ItemRow>
-                      ))}
-                      </Box>
-                    </Collapse>
-                  </CategoryGroup>
-                )
-              })}
-
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setAddingItem(true)}
-                sx={{ alignSelf: 'flex-start' }}
+              <button
+                aria-label="close"
+                onClick={handleCloseAttempt}
+                className={btnClose}
               >
-                + Add item
-              </Button>
-            </ItemsSection>
-          </ModalContent>
-        </DialogContent>
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleCloseAttempt}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave}>
-            Save
-          </Button>
-        </DialogActions>
+            {/* Body */}
+            <div className={modalBody}>
+              <div className={itemsSection}>
+                <div className={itemsSectionHeader}>
+                  <span className={itemsSectionTitle}>Items</span>
+                  {items.length > 0 && (
+                    <span className={itemsBadge}>{items.length}</span>
+                  )}
+                </div>
+
+                {itemsError && (
+                  <p className={errorInline}>At least one item is required</p>
+                )}
+
+                {Array.from(groupedItems.entries()).map(([categoryName, catItems]) => {
+                  const accent = getAccent(categoryName, categoryNames)
+                  return (
+                    <div key={categoryName} className={categoryGroup}>
+                      <Disclosure defaultOpen>
+                        {({ open: isOpen }: { open: boolean }) => (
+                          <>
+                            <DisclosureButton className={categoryGroupHeader}>
+                              <span className={clsx(categoryChip, accent.bg)}>
+                                {categoryName}
+                              </span>
+                              <span className={categoryCount}>{catItems.length}</span>
+                              <ChevronDownIcon
+                                className={clsx(chevronIcon, isOpen && chevronOpen)}
+                              />
+                            </DisclosureButton>
+                            <DisclosurePanel>
+                              <div className={itemsGroupBody}>
+                                {catItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className={clsx(itemRow, accent.border, 'bg-gray-800/40 hover:bg-gray-800/70')}
+                                  >
+                                    <div className={itemRowText}>
+                                      <span className={itemName}>{item.name}</span>
+                                      <span className={itemUnit}>{item.unit}</span>
+                                    </div>
+                                    <div className={itemActions}>
+                                      <button
+                                        className={btnIconEdit}
+                                        aria-label="Edit item"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleEditItem(item.id)
+                                        }}
+                                      >
+                                        <PencilIcon className="h-3.5 w-3.5" />
+                                      </button>
+                                      <button
+                                        className={btnIconDelete}
+                                        aria-label="Remove item"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleRemoveItem(item.id)
+                                        }}
+                                      >
+                                        <TrashIcon className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </DisclosurePanel>
+                          </>
+                        )}
+                      </Disclosure>
+                    </div>
+                  )
+                })}
+
+                <button
+                  className={btnAddItem}
+                  onClick={() => setAddingItem(true)}
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Add item
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className={modalFooter}>
+              <button className={btnModalCancel} onClick={handleCloseAttempt}>
+                Cancel
+              </button>
+              <button className={btnModalSave} onClick={() => void handleSave()}>
+                Save
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
       </Dialog>
 
+      {/* Item sub-dialog */}
       <Dialog
         open={addingItem}
-        onClose={() => { setAddingItem(false); setEditingItemId(null) }}
-        fullWidth
-        maxWidth="sm"
-        aria-labelledby="item-form-title"
+        onClose={() => {
+          setAddingItem(false)
+          setEditingItemId(null)
+        }}
+        className="relative z-[60]"
       >
-        <DialogTitle id="item-form-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography variant="h6" component="span">
-            {editingItemId ? 'Edit Item' : 'Add Item'}
-          </Typography>
-          <IconButton aria-label="close" onClick={() => { setAddingItem(false); setEditingItemId(null) }} edge="end">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
+        <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className={itemDialogPanel}>
+            <div className={itemDialogHeader}>
+              <DialogTitle className={itemDialogTitle}>
+                {editingItemId ? 'Edit Item' : 'Add Item'}
+              </DialogTitle>
+              <button
+                aria-label="close"
+                onClick={() => {
+                  setAddingItem(false)
+                  setEditingItemId(null)
+                }}
+                className="text-gray-400 hover:text-gray-200 p-1 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
             <ItemSubForm
               categories={categories}
               initialValues={
@@ -409,8 +411,8 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
                 setEditingItemId(null)
               }}
             />
-          </Box>
-        </DialogContent>
+          </DialogPanel>
+        </div>
       </Dialog>
 
       <UnsavedChangesDialog

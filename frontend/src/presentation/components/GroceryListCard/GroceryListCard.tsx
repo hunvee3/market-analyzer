@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import {
-  Card,
-  CardContent,
-  Button,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material'
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { format, parseISO } from 'date-fns'
 import type { GroceryList } from '@domain/grocery-list/GroceryList'
-import { CardActions, CardHeader, DateText } from './GroceryListCard.styles'
+import {
+  card,
+  cardHeader,
+  cardTitle,
+  cardDate,
+  cardActions,
+  btnPurchase,
+  btnEdit,
+  btnDelete,
+  dialogPanel,
+  dialogTitle,
+  dialogBody,
+  dialogActions,
+  btnConfirmCancel,
+  btnConfirmDelete,
+} from './GroceryListCard.styles'
 
 interface GroceryListCardProps {
   list: GroceryList
@@ -27,57 +33,70 @@ export function GroceryListCard({ list, onEdit, onDelete, onPurchase }: GroceryL
 
   return (
     <>
-      <Card>
-        <CardContent>
-          <CardHeader>
-            <Typography variant="h6" component="h2">
-              {list.name}
-            </Typography>
-            <DateText>{formattedDate}</DateText>
-          </CardHeader>
-          <CardActions>
-            <Button size="small" onClick={() => onPurchase(list.id)} aria-label="Purchase">
-              Purchase
-            </Button>
-            <Button size="small" onClick={() => onEdit(list.id)} aria-label="Edit">
-              Edit
-            </Button>
-            <Button
-              size="small"
-              color="error"
-              onClick={() => setDeleteDialogOpen(true)}
-              aria-label="Delete"
-            >
-              Delete
-            </Button>
-          </CardActions>
-        </CardContent>
-      </Card>
+      <article className={card}>
+        <div className={cardHeader}>
+          <h2 className={cardTitle}>{list.name}</h2>
+          <span className={cardDate}>{formattedDate}</span>
+        </div>
+        <div className={cardActions}>
+          <button
+            className={btnPurchase}
+            onClick={() => onPurchase(list.id)}
+            aria-label="Purchase"
+          >
+            Purchase
+          </button>
+          <button
+            className={btnEdit}
+            onClick={() => onEdit(list.id)}
+            aria-label="Edit"
+          >
+            Edit
+          </button>
+          <button
+            className={btnDelete}
+            onClick={() => setDeleteDialogOpen(true)}
+            aria-label="Delete"
+          >
+            Delete
+          </button>
+        </div>
+      </article>
 
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
+        className="relative z-50"
       >
-        <DialogTitle id="delete-dialog-title">Delete List</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete &quot;{list.name}&quot;? This cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            color="error"
-            aria-label="Confirm"
-            onClick={() => {
-              setDeleteDialogOpen(false)
-              onDelete(list.id)
-            }}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
+        {/* Backdrop */}
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        {/* Panel container */}
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className={dialogPanel}>
+            <DialogTitle className={dialogTitle}>Delete List</DialogTitle>
+            <p className={dialogBody}>
+              Are you sure you want to delete &quot;{list.name}&quot;? This cannot be undone.
+            </p>
+            <div className={dialogActions}>
+              <button
+                className={btnConfirmCancel}
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={btnConfirmDelete}
+                aria-label="Confirm"
+                onClick={() => {
+                  setDeleteDialogOpen(false)
+                  onDelete(list.id)
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
       </Dialog>
     </>
   )

@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Smart Basket',
         short_name: 'Smart Basket',
         description: 'Manage your grocery lists',
-        theme_color: '#1976d2',
-        background_color: '#ffffff',
+        theme_color: '#030712',
+        background_color: '#030712',
         display: 'standalone',
         icons: [
           {

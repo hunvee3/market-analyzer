@@ -1,16 +1,14 @@
-import { createContext, useContext, useState, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { ThemeProvider, CssBaseline } from '@mui/material'
-import { lightTheme, darkTheme } from './theme'
 
 interface ColorModeContextType {
+  isDark: boolean
   toggleColorMode: () => void
-  mode: 'light' | 'dark'
 }
 
 export const ColorModeContext = createContext<ColorModeContextType>({
+  isDark: true,
   toggleColorMode: () => undefined,
-  mode: 'light',
 })
 
 export function useColorMode() {
@@ -18,24 +16,22 @@ export function useColorMode() {
 }
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<'light' | 'dark'>('light')
+  const [isDark, setIsDark] = useState(true)
 
-  const colorMode = useMemo<ColorModeContextType>(
-    () => ({
-      toggleColorMode: () => setMode((prev) => (prev === 'light' ? 'dark' : 'light')),
-      mode,
-    }),
-    [mode],
-  )
-
-  const theme = mode === 'light' ? lightTheme : darkTheme
+  useEffect(() => {
+    const root = document.documentElement
+    if (isDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [isDark])
 
   return (
-    <ColorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+    <ColorModeContext.Provider
+      value={{ isDark, toggleColorMode: () => setIsDark((prev) => !prev) }}
+    >
+      {children}
     </ColorModeContext.Provider>
   )
 }

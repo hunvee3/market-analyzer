@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { TextField, Button } from '@mui/material'
+import { clsx } from 'clsx'
 import type { Category } from '@domain/grocery-list/Category'
 import { CategoryAutocomplete, createOrReuseCategoryUseCase } from '@presentation/components/CategoryAutocomplete/CategoryAutocomplete'
 import { useSetAtom } from 'jotai'
 import { categoriesAtom } from '@store/category.store'
-import { FormContainer, FormActions } from './ItemSubForm.styles'
+import { formContainer, fieldLabel, input, inputError, errorMsg, formActions, btnCancel, btnConfirm } from './ItemSubForm.styles'
 import type { NewItemInput } from '@application/grocery-list/use-cases/use-case-types'
 
 interface ItemSubFormProps {
@@ -58,51 +58,65 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <FormContainer>
-        <TextField
-          label="Item Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={nameError}
-          helperText={nameError ? 'Item name is required' : undefined}
-          inputProps={{ 'aria-label': 'Item Name' }}
-          size="small"
-          fullWidth
-          autoFocus
-        />
-        <TextField
-          label="Unit"
-          value={unit}
-          onChange={(e) => setUnit(e.target.value)}
-          error={unitError}
-          helperText={unitError ? 'Unit is required' : undefined}
-          inputProps={{ 'aria-label': 'Unit' }}
-          size="small"
-          fullWidth
-        />
-        <CategoryAutocomplete
-          value={category}
-          onChange={setCategory}
-          inputValue={categoryInputText}
-          onInputChange={(text) => {
-            setCategoryInputText(text)
-            if (category && text.toLowerCase() !== category.name.toLowerCase()) {
-              setCategory(null)
-            }
-          }}
-        />
-        <FormActions>
-          <Button type="button" onClick={onCancel}>Cancel</Button>
-          <Button
+      <div className={formContainer}>
+        <div>
+          <label htmlFor="item-name" className={fieldLabel}>Item Name</label>
+          <input
+            id="item-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Item Name"
+            placeholder="e.g. Milk"
+            autoFocus
+            className={clsx(input, nameError && inputError)}
+          />
+          {nameError && <p className={errorMsg}>Item name is required</p>}
+        </div>
+
+        <div>
+          <label htmlFor="item-unit" className={fieldLabel}>Unit</label>
+          <input
+            id="item-unit"
+            type="text"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            aria-label="Unit"
+            placeholder="e.g. kg, L, units"
+            className={clsx(input, unitError && inputError)}
+          />
+          {unitError && <p className={errorMsg}>Unit is required</p>}
+        </div>
+
+        <div>
+          <label className={fieldLabel}>Category</label>
+          <CategoryAutocomplete
+            value={category}
+            onChange={setCategory}
+            inputValue={categoryInputText}
+            onInputChange={(text) => {
+              setCategoryInputText(text)
+              if (category && text.toLowerCase() !== category.name.toLowerCase()) {
+                setCategory(null)
+              }
+            }}
+          />
+        </div>
+
+        <div className={formActions}>
+          <button type="button" className={btnCancel} onClick={onCancel}>
+            Cancel
+          </button>
+          <button
             type="submit"
-            variant="contained"
+            className={btnConfirm}
             disabled={confirmDisabled}
             aria-label="Confirm"
           >
             Confirm
-          </Button>
-        </FormActions>
-      </FormContainer>
+          </button>
+        </div>
+      </div>
     </form>
   )
 }
