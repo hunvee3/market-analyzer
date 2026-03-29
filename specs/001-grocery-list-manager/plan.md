@@ -9,14 +9,16 @@ Build the Grocery List Manager feature as a frontend-only PWA using React + Type
 The feature covers a dashboard to browse, search, and delete lists, plus create/edit modals
 with item and category management. No backend is present in this phase; a localStorage-backed
 adapter fulfils the `GroceryListRepository` and `CategoryRepository` ports, making it trivially
-swappable when the Fastify backend is built. Theming ships with a light/dark mode toggle using
-MUI's theming system and an Inter-based minimal palette.
+swappable when the Fastify backend is built. Styling uses Tailwind CSS v3 with a dark-first
+design (gray-950/900 surfaces, indigo/violet accents, smooth rounded corners and transitions);
+Headless UI provides accessible Dialog, Combobox, and Disclosure primitives; a `ColorModeContext`
+toggle allows switching to light mode as an opt-in.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x / Node 22+
-**Primary Dependencies**: React 18, MUI v5, styled-components v6, date-fns v3, Jotai,
-Vitest + React Testing Library, vite-plugin-pwa
+**Primary Dependencies**: React 18, Tailwind CSS v3, @headlessui/react, @heroicons/react,
+clsx, tailwind-merge, date-fns v3, Jotai, Vitest + React Testing Library, vite-plugin-pwa
 **Storage**: localStorage (mock adapter only — session-persistent, temporary)
 **Testing**: Vitest + React Testing Library; all unit tests mock port dependencies
 **Target Platform**: PWA — Chrome, Firefox, Safari (desktop + mobile); minimum viewport 320px
@@ -39,9 +41,10 @@ categories shared across all lists for the session user
       descriptions follow Given/When/Then. Tests written and confirmed failing first.
 - [x] **Error Handling**: Snackbar for API/network errors. Inline field-level errors for
       validation. No custom error shapes outside defined contracts.
-- [x] **Frontend Stack**: React 18 + TypeScript + MUI v5 + styled-components v6 + date-fns v3
-      + **Jotai** (state management — Zustand is prohibited per constitution v1.1.0).
-      Styling rule enforced. Mock API via localStorage adapter per constitution mock-first rule.
+- [x] **Frontend Stack**: React 18 + TypeScript + Tailwind CSS v3 + Headless UI + Heroicons
+      + clsx/tailwind-merge + date-fns v3 + **Jotai** (state management — Zustand is prohibited
+      per constitution v1.1.0). Dark-first design, class-name constant styling rule enforced.
+      Mock API via localStorage adapter per constitution mock-first rule.
 - [-] **Backend Stack**: Not applicable for this phase (frontend only).
 - [x] **Branching**: Feature branch to be renamed `feature/001-grocery-list-manager` per Git
       Flow naming convention (see T047); `develop` branch to be created before first PR merge.
@@ -93,8 +96,7 @@ frontend/
 │   │
 │   ├── presentation/
 │   │   ├── theme/
-│   │   │   ├── theme.ts                     # MUI createTheme (light + dark palettes)
-│   │   │   └── AppThemeProvider.tsx         # ThemeProvider + CssBaseline + toggle context
+│   │   │   └── AppThemeProvider.tsx         # dark class toggle + ColorModeContext
 │   │   ├── context/
 │   │   │   └── SnackbarContext.tsx          # Global snackbar for non-validation errors
 │   │   ├── pages/
@@ -116,7 +118,7 @@ frontend/
 │   │       ├── SearchBar/
 │   │       │   └── SearchBar.tsx             # <3 style props — no styles file
 │   │       └── UnsavedChangesDialog/
-│   │           └── UnsavedChangesDialog.tsx  # Pure MUI Dialog — no styles file
+│   │           └── UnsavedChangesDialog.tsx  # Headless UI Dialog — no styles file
 │   │
 │   ├── store/
 │   │   ├── groceryList.store.ts             # Jotai atoms (wires use cases to UI)
@@ -153,15 +155,14 @@ These decisions were made and validated during implementation. Future features e
 this codebase MUST follow these patterns.
 
 ### GroceryListModal is always full-screen
-`<Dialog fullScreen>` is applied unconditionally — not just on mobile breakpoints.
-This was confirmed as the desired UX after implementation.
+The Headless UI `Dialog` panel uses `fixed inset-0 bg-gray-950 z-50 flex flex-col`
+unconditionally — not just on mobile breakpoints. This was confirmed as the desired UX.
 
 ### ItemSubForm opens as a Dialog, not inline
-The item add/edit form renders inside a separate MUI `Dialog` (`maxWidth="sm"`, not
-full-screen) layered above the list modal. The `ItemSubForm` component itself contains
-no `Paper` wrapper or `scrollIntoView` logic — those belong to the host container.
-`addingItem` state in `GroceryListModal` controls both the dialog's `open` prop and
-which title to show ("Add Item" / "Edit Item").
+The item add/edit form renders inside a separate Headless UI `Dialog` (max-width `sm`,
+not full-screen) layered above the list modal. The `ItemSubForm` component itself contains
+no extra wrapper or `scrollIntoView` logic. `addingItem` state in `GroceryListModal`
+controls both the dialog's `open` prop and which title to show ("Add Item" / "Edit Item").
 
 ### categoriesAtom is the single source of truth for categories
 `GroceryListModal` reads categories directly from `useAtom(categoriesAtom)` — there is
@@ -183,13 +184,14 @@ raw typed text if no `Category` object is selected. Changing typed text clears t
 currently selected `Category` state to force re-resolution on next submit.
 
 ### Category sections are collapsible
-`GroceryListModal` maintains `collapsedCategories: Set<string>`. Each category header is
-clickable; the items list is wrapped in MUI `<Collapse in={!isCollapsed}>`. All categories
-start expanded (empty set). Edit/delete icon buttons call `e.stopPropagation()` to avoid
-triggering the header collapse.
+`GroceryListModal` uses Headless UI `Disclosure` for each category group, defaulting to
+open. The disclosure button shows item count + `ChevronDownIcon` (rotated on open via
+`rotate-180` class). Edit/delete icon buttons call `e.stopPropagation()` to avoid
+triggering the disclosure toggle.
 
 ### Item separation within category groups
-Items inside a Collapse block are wrapped in a `<Box sx={{ display:'flex', flexDirection:'column', gap:1 }}>` to ensure visual spacing. This is NOT done via the `CategoryGroup` styled component.
+Items inside a Disclosure panel are wrapped in a `<div className="flex flex-col gap-2">`
+for visual spacing.
 
 ### jsdom scrollIntoView polyfill required in tests
 jsdom does not implement `Element.prototype.scrollIntoView`. The `frontend/tests/setup.ts`

@@ -1,19 +1,24 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.1.0 → 1.2.0 (MINOR — two new Frontend Tech Stack sub-rules added)
+Version change: 1.2.0 → 1.3.0 (MINOR — Frontend Tech Stack replaced MUI/styled-components
+  with Tailwind CSS + Headless UI; dark-first design mandate added)
 Modified principles:
   - IV. Frontend Tech Stack:
-      • Added keyboard form submission rule (forms MUST use <form onSubmit>, not button-click only)
-      • Added jsdom polyfill rule (missing browser APIs MUST be polyfilled in tests/setup.ts)
+      • Replaced MUI (Material UI) and styled-components with Tailwind CSS v3 and Headless UI
+      • Added dark-first design mandate (dark palette is the default; light is opt-in)
+      • Updated styling rule to Tailwind class-name constant pattern
+      • Updated component library references throughout
 Added sections: none
 Removed sections: none
-Rationale: Learnings from 001-grocery-list-manager implementation — keyboard navigation was
-  retrofitted rather than built first-class; scrollIntoView broke tests because the jsdom
-  gap was discovered late rather than handled upfront in setup.
+Rationale: MUI ships a heavy runtime theme system and opinionated component styles that
+  conflict with the desired smooth, dark-first aesthetic. Tailwind CSS offers utility-first
+  styling with no runtime overhead, and Headless UI provides fully accessible primitives
+  (Dialog, Combobox, Disclosure) that Tailwind Labs maintains and that compose naturally
+  with Tailwind classes.
 Templates updated:
   ✅ .specify/memory/constitution.md (this file)
-  ⚠  .specify/templates/plan-template.md — consider adding jsdom polyfill to setup task
+  ⚠  .specify/templates/plan-template.md — update dependency list and setup task
   ⚠  CLAUDE.md — auto-generated; will be refreshed on next /speckit.plan run
 Deferred TODOs: none
 -->
@@ -94,9 +99,25 @@ log entry with sufficient context to diagnose the root cause.
 
 The frontend MUST be a Progressive Web App (PWA) built with **React** and **TypeScript**.
 
-- **UI library**: MUI (Material UI) with styled-components for all visual components.
-- **Styling rule**: Components with more than 3 style properties MUST externalize styles
-  to a dedicated `[ComponentName].styles.ts` file. Fewer than 3 properties may be inline.
+- **UI styling**: **Tailwind CSS v3** MUST be used for all visual styling. MUI (Material UI),
+  styled-components, Emotion, and any other CSS-in-JS runtime are not permitted.
+- **Accessible primitives**: **Headless UI** (`@headlessui/react`) MUST be used for all
+  interactive overlay components (Dialog, Combobox, Disclosure, Menu, Transition).
+  Do not re-implement accessibility behaviour (focus trapping, ARIA roles, keyboard events)
+  that Headless UI already provides.
+- **Icons**: **Heroicons** (`@heroicons/react`) is the approved icon library.
+- **Class composition**: `clsx` and `tailwind-merge` MUST be used for conditional or merged
+  Tailwind class strings. Template literal concatenation of class strings is not permitted
+  when conditions are involved.
+- **Styling rule**: Components with multiple logical groups of Tailwind classes MUST
+  externalize class-name constants to a dedicated `[ComponentName].styles.ts` file using
+  plain `const` string exports. Single-group or trivial class strings may remain inline.
+- **Design language**: Dark-first. The default theme MUST use a dark palette
+  (e.g., `bg-gray-950` / `bg-gray-900` surfaces, `text-gray-100` body text, `bg-gray-800`
+  cards, `indigo-500` / `violet-500` accents). Light mode is opt-in via `dark:` variants
+  and a `ColorModeContext` toggle. Visual style MUST be smooth and pleasing: rounded corners
+  (`rounded-xl`), subtle shadows (`shadow-lg`), gentle transitions (`transition-colors
+  duration-200`), and consistent spacing.
 - **State management**: **Jotai** MUST be used for all frontend global and shared state.
   Zustand, Redux, MobX, and other global state libraries are not permitted. Local component
   state (`useState`) remains acceptable for purely local, non-shared state.
@@ -135,7 +156,10 @@ The backend MUST be implemented using **Fastify** and **TypeScript**.
 |---|---|---|
 | Language | TypeScript | TypeScript |
 | Framework | React (PWA) | Fastify |
-| UI | MUI + styled-components | — |
+| UI styling | Tailwind CSS v3 | — |
+| Accessible primitives | Headless UI | — |
+| Icons | Heroicons | — |
+| Class utilities | clsx + tailwind-merge | — |
 | State management | Jotai | — |
 | Date handling | date-fns | — |
 | Testing | React Testing Library | Jest (unit), Supertest (integration) |
@@ -168,4 +192,4 @@ This project MUST follow **Git Flow**.
 - Version policy: MAJOR for incompatible governance changes or principle removals;
   MINOR for new principles or material expansions; PATCH for clarifications or wording.
 
-**Version**: 1.2.0 | **Ratified**: 2026-03-27 | **Last Amended**: 2026-03-27
+**Version**: 1.3.0 | **Ratified**: 2026-03-27 | **Last Amended**: 2026-03-29
