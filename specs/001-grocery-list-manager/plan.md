@@ -201,6 +201,14 @@ window.HTMLElement.prototype.scrollIntoView = () => {}
 ```
 Any component that calls `scrollIntoView` in a `useEffect` will throw in jsdom without this.
 
+## Bugfix: Responsive "Create New List" Button
+
+**Purpose**: On mobile the full-text "Create New List" button takes too much space in the header. Replace with a compact plus-icon button on mobile (< 640px); keep full text on desktop (≥ 640px).
+
+**Approach**: Render two elements — an icon button with `sm:hidden` and the text button with `hidden sm:inline-flex`. Both share the same `onClick` handler. Uses `PlusIcon` from `@heroicons/react/20/solid`.
+
+**Files**: `DashboardPage.styles.ts`, `DashboardPage.tsx`
+
 ## Complexity Tracking
 
 > No constitution violations to justify. All architectural decisions are compliant.

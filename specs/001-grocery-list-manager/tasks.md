@@ -303,3 +303,9 @@ With two developers after Phase 2 completes:
 - Validation errors MUST be inline on fields; snackbar is ONLY for API/network errors (per constitution + FR-023)
 - `filteredListsAtom` is a Jotai derived atom (read-only, computed from `groceryListsAtom` + `searchQueryAtom`)
 - Stop at each checkpoint to validate the story independently before moving to next priority
+
+---
+
+## Bugfix: Responsive "Create New List" Button
+
+- [x] T-BF001 Render plus-icon button (`sm:hidden`) on mobile and full-text button (`hidden sm:inline-flex`) on desktop in DashboardPage header (FR-004 updated)

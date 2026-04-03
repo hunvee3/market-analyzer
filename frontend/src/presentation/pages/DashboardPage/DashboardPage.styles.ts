@@ -5,7 +5,10 @@ export const pageHeader = 'flex items-center justify-between gap-4 flex-wrap'
 export const pageTitle = 'text-2xl font-semibold text-gray-100'
 
 export const btnCreateNew =
-  'bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 shrink-0'
+  'hidden sm:inline-flex bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 shrink-0'
+
+export const btnCreateNewIcon =
+  'sm:hidden inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 shrink-0'
 
 export const listsGrid =
   'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'

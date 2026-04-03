@@ -148,7 +148,9 @@ and items, saving, and verifying all changes are reflected on the dashboard.
 - **FR-003**: Dashboard MUST include a real-time search bar that filters the list by name as
   the user types.
 - **FR-004**: Dashboard MUST include a "Create New List" button permanently visible at the top
-  of the page.
+  of the page. On mobile viewports (< 640px) the button MUST render as a compact icon-only
+  button (plus icon) on the same line as the page title, aligned to the right. On desktop
+  viewports (≥ 640px) the button MUST render with full text label.
 - **FR-005**: Each grocery list card MUST include three action buttons: Purchase, Edit, and Delete.
 - **FR-006**: The Purchase button MUST log the action; no other behavior is required at this stage.
 - **FR-007**: The Delete button MUST prompt the user for confirmation before permanently removing
