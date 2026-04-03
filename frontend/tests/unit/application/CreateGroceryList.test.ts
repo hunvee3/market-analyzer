@@ -9,7 +9,7 @@ const mockCreatedList: GroceryList = {
   name: 'My List',
   createdAt: '2026-03-01T00:00:00.000Z',
   updatedAt: '2026-03-01T00:00:00.000Z',
-  items: [{ id: 'item-1', name: 'Milk', unit: 'L', categoryId: 'cat-1', position: 0 }],
+  items: [{ id: 'item-1', name: 'Milk', amount: 2, unit: 'L', categoryId: 'cat-1', position: 0 }],
 }
 
 describe('CreateGroceryListUseCase', () => {
@@ -32,25 +32,41 @@ describe('CreateGroceryListUseCase', () => {
 
     const result = await useCase.execute({
       name: 'My List',
-      items: [{ name: 'Milk', unit: 'L', categoryId: 'cat-1' }],
+      items: [{ name: 'Milk', amount: 2, unit: 'L', categoryId: 'cat-1' }],
     })
 
     expect(repository.create).toHaveBeenCalledWith({
       name: 'My List',
-      items: [{ name: 'Milk', unit: 'L', categoryId: 'cat-1' }],
+      items: [{ name: 'Milk', amount: 2, unit: 'L', categoryId: 'cat-1' }],
     })
     expect(result).toEqual(mockCreatedList)
   })
 
   it('Given empty name, When executed, Then throws ValidationError', async () => {
     await expect(
-      useCase.execute({ name: '   ', items: [{ name: 'Milk', unit: 'L', categoryId: 'cat-1' }] }),
+      useCase.execute({ name: '   ', items: [{ name: 'Milk', amount: 1, unit: 'L', categoryId: 'cat-1' }] }),
     ).rejects.toThrow(ValidationError)
   })
 
   it('Given empty items array, When executed, Then throws ValidationError', async () => {
     await expect(
       useCase.execute({ name: 'My List', items: [] }),
+    ).rejects.toThrow(ValidationError)
+  })
+
+  it('Given item with amount <= 0, When executed, Then throws ValidationError', async () => {
+    await expect(
+      useCase.execute({ name: 'My List', items: [{ name: 'Milk', amount: 0, unit: 'L', categoryId: 'cat-1' }] }),
+    ).rejects.toThrow(ValidationError)
+
+    await expect(
+      useCase.execute({ name: 'My List', items: [{ name: 'Milk', amount: -1, unit: 'L', categoryId: 'cat-1' }] }),
+    ).rejects.toThrow(ValidationError)
+  })
+
+  it('Given item with invalid unit, When executed, Then throws ValidationError', async () => {
+    await expect(
+      useCase.execute({ name: 'My List', items: [{ name: 'Milk', amount: 1, unit: 'gallons' as never, categoryId: 'cat-1' }] }),
     ).rejects.toThrow(ValidationError)
   })
 })

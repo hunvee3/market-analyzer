@@ -43,7 +43,7 @@ describe('ItemSubForm', () => {
     expect(screen.getByRole('button', { name: /confirm/i })).toBeDisabled()
   })
 
-  it('Given all fields filled (via initialValues), When confirm clicked, Then calls onConfirm with item data', async () => {
+  it('Given all fields filled (via initialValues), When confirm clicked, Then calls onConfirm with item data including amount', async () => {
     const user = userEvent.setup()
     const onConfirm = vi.fn()
     const store = createStore()
@@ -53,7 +53,7 @@ describe('ItemSubForm', () => {
       <Provider store={store}>
         <ItemSubForm
           categories={mockCategories}
-          initialValues={{ name: 'Milk', unit: 'L', category: dairyCategory }}
+          initialValues={{ name: 'Milk', amount: 2, unit: 'L', category: dairyCategory }}
           onConfirm={onConfirm}
           onCancel={vi.fn()}
         />
@@ -67,8 +67,48 @@ describe('ItemSubForm', () => {
     await user.click(confirmBtn)
 
     expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Milk', unit: 'L', categoryId: 'cat-1' }),
+      expect.objectContaining({ name: 'Milk', amount: 2, unit: 'L', categoryId: 'cat-1' }),
       'Dairy',
     )
+  })
+
+  it('Given amount is 0, When confirm clicked, Then does not call onConfirm', async () => {
+    const user = userEvent.setup()
+    const onConfirm = vi.fn()
+    const store = createStore()
+    store.set(categoriesAtom, mockCategories)
+
+    render(
+      <Provider store={store}>
+        <ItemSubForm
+          categories={mockCategories}
+          initialValues={{ name: 'Milk', amount: 0, unit: 'L', category: dairyCategory }}
+          onConfirm={onConfirm}
+          onCancel={vi.fn()}
+        />
+      </Provider>,
+    )
+
+    const confirmBtn = screen.getByRole('button', { name: /confirm/i })
+    await user.click(confirmBtn)
+
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  it('Given default initialValues, Then amount defaults to 1 and unit defaults to units', () => {
+    const store = createStore()
+    store.set(categoriesAtom, mockCategories)
+
+    render(
+      <Provider store={store}>
+        <ItemSubForm categories={mockCategories} onConfirm={vi.fn()} onCancel={vi.fn()} />
+      </Provider>,
+    )
+
+    const amountInput = screen.getByLabelText('Amount') as HTMLInputElement
+    expect(amountInput.value).toBe('1')
+
+    const unitButton = screen.getByLabelText('Unit')
+    expect(unitButton).toHaveTextContent('units')
   })
 })
