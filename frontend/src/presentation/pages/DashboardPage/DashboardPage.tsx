@@ -14,6 +14,7 @@ import { DeleteGroceryListUseCase } from '@application/grocery-list/use-cases/De
 import { SavePurchaseUseCase } from '@application/purchase/use-cases/SavePurchase.usecase'
 import { groceryListRepository, categoryRepository, purchaseRepository, productPriceRecordRepository } from '@di/container'
 import { useSnackbar } from '@presentation/context/SnackbarContext'
+import { PlusIcon } from '@heroicons/react/20/solid'
 import type { Market } from '@domain/purchase/Market'
 import type { GroceryList } from '@domain/grocery-list/GroceryList'
 import {
@@ -21,6 +22,7 @@ import {
   pageHeader,
   pageTitle,
   btnCreateNew,
+  btnCreateNewIcon,
   listsGrid,
   emptyState,
   emptyStateText,
@@ -140,6 +142,9 @@ export function DashboardPage() {
     <main className={pageContainer}>
       <div className={pageHeader}>
         <h1 className={pageTitle}>My Grocery Lists</h1>
+        <button className={btnCreateNewIcon} onClick={handleCreateNew} aria-label="Create New List">
+          <PlusIcon className="h-5 w-5" />
+        </button>
         <button className={btnCreateNew} onClick={handleCreateNew}>
           Create New List
         </button>
