@@ -1,6 +1,9 @@
+import type { UnitType } from '@domain/shared/UnitType'
+
 export interface NewItemInput {
   name: string
-  unit: string
+  amount: number
+  unit: UnitType
   categoryId: string
 }
 

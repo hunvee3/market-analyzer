@@ -50,7 +50,7 @@ describe('GroceryListModal (edit mode)', () => {
       ...mockList,
       name: 'Updated Shopping',
       updatedAt: '2026-03-27T00:00:00.000Z',
-      items: [{ id: 'item-1', name: 'Bread', unit: 'pcs', categoryId: 'cat-1', position: 0 }],
+      items: [{ id: 'item-1', name: 'Bread', amount: 1, unit: 'units', categoryId: 'cat-1', position: 0 }],
     })
 
     render(

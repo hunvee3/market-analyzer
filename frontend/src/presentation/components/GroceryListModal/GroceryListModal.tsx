@@ -4,6 +4,7 @@ import { XMarkIcon, PencilIcon, TrashIcon, ChevronDownIcon, PlusIcon } from '@he
 import { clsx } from 'clsx'
 import { useAtom, useSetAtom } from 'jotai'
 import type { GroceryList } from '@domain/grocery-list/GroceryList'
+import type { UnitType } from '@domain/shared/UnitType'
 import type { NewItemInput } from '@application/grocery-list/use-cases/use-case-types'
 import { ItemSubForm } from '@presentation/components/ItemSubForm/ItemSubForm'
 import { UnsavedChangesDialog } from '@presentation/components/UnsavedChangesDialog/UnsavedChangesDialog'
@@ -73,7 +74,8 @@ function getAccent(categoryName: string, allNames: string[]) {
 interface PendingItem {
   id: string
   name: string
-  unit: string
+  amount: number
+  unit: UnitType
   categoryId: string
   categoryName: string
 }
@@ -122,6 +124,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
               return {
                 id: item.id,
                 name: item.name,
+                amount: item.amount,
                 unit: item.unit,
                 categoryId: item.categoryId,
                 categoryName: cat?.name ?? item.categoryId,
@@ -181,6 +184,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
     }
     const newItems: NewItemInput[] = items.map((item) => ({
       name: item.name,
+      amount: item.amount,
       unit: item.unit,
       categoryId: item.categoryId,
     }))
@@ -306,7 +310,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
                                   >
                                     <div className={itemRowText}>
                                       <span className={itemName}>{item.name}</span>
-                                      <span className={itemUnit}>{item.unit}</span>
+                                      <span className={itemUnit}>{item.amount} {item.unit}</span>
                                     </div>
                                     <div className={itemActions}>
                                       <button
@@ -397,6 +401,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
                 editingItem
                   ? {
                       name: editingItem.name,
+                      amount: editingItem.amount,
                       unit: editingItem.unit,
                       category: editingCategory,
                       categoryName: editingItem.categoryName,

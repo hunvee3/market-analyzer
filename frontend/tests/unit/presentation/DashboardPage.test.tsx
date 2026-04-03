@@ -19,6 +19,25 @@ vi.mock('@di/container', () => ({
     findByNormalizedName: vi.fn(),
     create: vi.fn(),
   },
+  marketRepository: {
+    getAll: vi.fn().mockResolvedValue([]),
+    getById: vi.fn(),
+    findByAddress: vi.fn(),
+    create: vi.fn(),
+  },
+  productRepository: {
+    getAll: vi.fn(),
+    getById: vi.fn(),
+    findByBarcode: vi.fn(),
+    create: vi.fn(),
+  },
+  purchaseRepository: {
+    create: vi.fn(),
+  },
+  productPriceRecordRepository: {
+    getLastPriceForProduct: vi.fn(),
+    createBatch: vi.fn(),
+  },
 }))
 
 const makeList = (id: string, name: string, updatedAt: string): GroceryList => ({

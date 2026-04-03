@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { clsx } from 'clsx'
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
+import { ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import type { Category } from '@domain/grocery-list/Category'
+import type { UnitType } from '@domain/shared/UnitType'
+import { UNIT_OPTIONS } from '@domain/shared/UnitType'
 import { CategoryAutocomplete, createOrReuseCategoryUseCase } from '@presentation/components/CategoryAutocomplete/CategoryAutocomplete'
 import { useSetAtom } from 'jotai'
 import { categoriesAtom } from '@store/category.store'
@@ -9,14 +13,15 @@ import type { NewItemInput } from '@application/grocery-list/use-cases/use-case-
 
 interface ItemSubFormProps {
   categories: Category[]
-  initialValues?: { name: string; unit: string; category: Category | null; categoryName?: string }
+  initialValues?: { name: string; amount: number; unit: UnitType; category: Category | null; categoryName?: string }
   onConfirm: (item: NewItemInput, categoryName: string) => void
   onCancel: () => void
 }
 
 export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
-  const [unit, setUnit] = useState(initialValues?.unit ?? '')
+  const [amount, setAmount] = useState<string>(initialValues?.amount?.toString() ?? '1')
+  const [unit, setUnit] = useState<UnitType>(initialValues?.unit ?? 'units')
   const [category, setCategory] = useState<Category | null>(initialValues?.category ?? null)
   const [categoryInputText, setCategoryInputText] = useState(
     initialValues?.category?.name ?? initialValues?.categoryName ?? '',
@@ -24,14 +29,15 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
   const [attempted, setAttempted] = useState(false)
   const setCategories = useSetAtom(categoriesAtom)
 
+  const parsedAmount = parseFloat(amount)
   const nameError = attempted && !name.trim()
-  const unitError = attempted && !unit.trim()
+  const amountError = attempted && (isNaN(parsedAmount) || parsedAmount <= 0)
   const categoryFilled = !!category || !!categoryInputText.trim()
-  const confirmDisabled = !name.trim() || !unit.trim() || !categoryFilled
+  const confirmDisabled = !name.trim() || isNaN(parsedAmount) || parsedAmount <= 0 || !categoryFilled
 
   async function handleConfirm() {
     setAttempted(true)
-    if (!name.trim() || !unit.trim()) return
+    if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return
 
     let resolvedCategory = category
 
@@ -46,7 +52,7 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
 
     if (!resolvedCategory) return
     onConfirm(
-      { name: name.trim(), unit: unit.trim(), categoryId: resolvedCategory.id },
+      { name: name.trim(), amount: parsedAmount, unit, categoryId: resolvedCategory.id },
       resolvedCategory.name,
     )
   }
@@ -74,18 +80,46 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
           {nameError && <p className={errorMsg}>Item name is required</p>}
         </div>
 
-        <div>
-          <label htmlFor="item-unit" className={fieldLabel}>Unit</label>
-          <input
-            id="item-unit"
-            type="text"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            aria-label="Unit"
-            placeholder="e.g. kg, L, units"
-            className={clsx(input, unitError && inputError)}
-          />
-          {unitError && <p className={errorMsg}>Unit is required</p>}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label htmlFor="item-amount" className={fieldLabel}>Amount</label>
+            <input
+              id="item-amount"
+              type="number"
+              min="0.01"
+              step="any"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              aria-label="Amount"
+              placeholder="1"
+              className={clsx(input, amountError && inputError)}
+            />
+            {amountError && <p className={errorMsg}>Amount must be greater than 0</p>}
+          </div>
+
+          <div className="flex-1">
+            <label className={fieldLabel}>Unit</label>
+            <Listbox value={unit} onChange={setUnit}>
+              <ListboxButton
+                className={clsx(input, 'flex items-center justify-between')}
+                aria-label="Unit"
+              >
+                <span>{UNIT_OPTIONS.find((o) => o.value === unit)?.label ?? unit}</span>
+                <ChevronUpDownIcon className="h-4 w-4 text-gray-400" />
+              </ListboxButton>
+              <ListboxOptions className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-xl bg-gray-900 border border-gray-700 shadow-lg py-1 text-sm">
+                {UNIT_OPTIONS.map((opt) => (
+                  <ListboxOption
+                    key={opt.value}
+                    value={opt.value}
+                    className="cursor-pointer select-none px-4 py-2 text-gray-100 data-[focus]:bg-indigo-600 data-[focus]:text-white"
+                  >
+                    {opt.label}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Listbox>
+          </div>
         </div>
 
         <div>

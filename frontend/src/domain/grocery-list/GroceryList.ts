@@ -1,7 +1,10 @@
+import type { UnitType } from '@domain/shared/UnitType'
+
 export interface GroceryItem {
   id: string
   name: string
-  unit: string
+  amount: number
+  unit: UnitType
   categoryId: string
   position: number
 }
