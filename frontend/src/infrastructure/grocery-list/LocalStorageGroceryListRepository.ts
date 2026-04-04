@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { GroceryList, GroceryItem } from '@domain/grocery-list/GroceryList'
 import type { GroceryListRepository } from '@application/grocery-list/ports/GroceryListRepository.port'
 import type { UnitType } from '@domain/shared/UnitType'
@@ -53,12 +54,12 @@ export class LocalStorageGroceryListRepository implements GroceryListRepository 
     const lists = this.readAll()
     const now = new Date().toISOString()
     const newList: GroceryList = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: input.name,
       createdAt: now,
       updatedAt: now,
       items: input.items.map((item, index): GroceryItem => ({
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         name: item.name,
         amount: item.amount,
         unit: item.unit,
@@ -84,7 +85,7 @@ export class LocalStorageGroceryListRepository implements GroceryListRepository 
       name: input.name,
       updatedAt: new Date().toISOString(),
       items: input.items.map((item, pos): GroceryItem => ({
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         name: item.name,
         amount: item.amount,
         unit: item.unit,

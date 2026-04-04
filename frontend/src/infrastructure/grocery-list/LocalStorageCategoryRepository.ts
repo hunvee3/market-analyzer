@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { Category } from '@domain/grocery-list/Category'
 import type { CategoryRepository } from '@application/grocery-list/ports/CategoryRepository.port'
 
@@ -31,7 +32,7 @@ export class LocalStorageCategoryRepository implements CategoryRepository {
   async create(name: string): Promise<Category> {
     const categories = this.readAll()
     const newCategory: Category = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: name.trim(),
       normalizedName: name.trim().toLowerCase(),
       createdAt: new Date().toISOString(),

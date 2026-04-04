@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { AssignProductInput } from '@application/purchase/use-cases/use-case-types'
 import type { PurchaseItem } from '@domain/purchase/Purchase'
 import { ValidationError } from '@application/grocery-list/use-cases/use-case-types'
@@ -12,7 +13,7 @@ export class AssignProductUseCase {
     }
 
     return {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       groceryItemId: input.groceryItemId,
       productId: input.productId,
       quantity: input.quantity,

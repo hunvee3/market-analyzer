@@ -237,20 +237,32 @@ fully controlled and prevents the Combobox from resetting the text on blur.
 ## Bugfix: Confirm button unresponsive on mobile after category input blur (BF003)
 
 **Purpose**: On mobile Chrome, tapping the Confirm button in the Add Item form does
-nothing — the button flashes disabled and the item is never created. Caused by
-Headless UI Combobox v2.2.9 calling `onChange(null)` on blur when the combobox is open
-and `value` is `null` (free-text typed), combined with the Combobox's `useOutsideClick`
-`touchend` handler and internal `useWatch` DOM manipulation on close.
+nothing — the button flashes disabled and the item is never created. Root cause:
+`crypto.randomUUID()` is not available in all mobile browser contexts (non-secure
+contexts, older WebViews), causing a silent runtime error when creating items,
+categories, or lists. A secondary contributing factor was Headless UI Combobox
+v2.2.9 calling `onChange(null)` on blur, which could interfere with the Confirm
+button's tap event on mobile.
 
-**Approach**: Multi-layered defense:
+**Approach**: Two-part fix:
 
-1. Null guard in `handleSelect` — prevents crash on `null.name`.
-2. `onPointerDown` with `preventDefault` on Confirm button — prevents focus from
-   leaving the category input, stopping the Combobox blur cascade entirely.
-3. `categoryInputTextRef` in `ItemSubForm` — ref-backed fallback for category text
-   so that even if a render cycle clears state, the ref preserves the last typed text.
+1. **Primary fix** — Replace all `crypto.randomUUID()` calls across the codebase
+   with `uuid` library v4 (`import { v4 as uuidv4 } from 'uuid'`). This is a
+   temporary polyfill until the backend generates IDs server-side. Affected files:
+   `LocalStorageGroceryListRepository.ts`, `LocalStorageCategoryRepository.ts`,
+   `GroceryListModal.tsx`, `MockMarketRepository.ts`, `MockProductRepository.ts`,
+   `MockPurchaseRepository.ts`, `MockProductPriceRecordRepository.ts`,
+   `AssignProduct.usecase.ts`.
+2. **Defensive fixes** (kept from initial investigation):
+   - Null guard in `handleSelect` — prevents crash on `null.name`.
+   - `onPointerDown` with `preventDefault` on Confirm button — prevents focus from
+     leaving the category input, stopping the Combobox blur cascade.
+   - `categoryInputTextRef` in `ItemSubForm` — ref-backed fallback for category text.
 
-**Files**: `CategoryAutocomplete.tsx`, `ItemSubForm.tsx`
+**Dependencies added**: `uuid` (runtime), `@types/uuid` (devDependency).
+
+**Files**: `CategoryAutocomplete.tsx`, `ItemSubForm.tsx`, plus all 8 infrastructure/
+application/presentation files listed above.
 
 **Related requirement**: FR-016 — category resolved on Confirm click, not on blur.
 

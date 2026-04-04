@@ -38,21 +38,29 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
 
   async function handleConfirm() {
     setAttempted(true)
-    if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return
+    if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
+      return
+    }
 
     let resolvedCategory = category
     const catText = categoryInputText || categoryInputTextRef.current
 
     if (!resolvedCategory && catText.trim()) {
-      resolvedCategory = await createOrReuseCategoryUseCase.execute({ name: catText.trim() })
-      setCategories((prev) => {
-        const exists = prev.some((c) => c.id === resolvedCategory!.id)
-        return exists ? prev : [...prev, resolvedCategory!]
-      })
-      setCategory(resolvedCategory)
+      try {
+        resolvedCategory = await createOrReuseCategoryUseCase.execute({ name: catText.trim() })
+        setCategories((prev) => {
+          const exists = prev.some((c) => c.id === resolvedCategory!.id)
+          return exists ? prev : [...prev, resolvedCategory!]
+        })
+        setCategory(resolvedCategory)
+      } catch {
+        return
+      }
     }
 
-    if (!resolvedCategory) return
+    if (!resolvedCategory) {
+      return
+    }
     onConfirm(
       { name: name.trim(), amount: parsedAmount, unit, categoryId: resolvedCategory.id },
       resolvedCategory.name,
@@ -61,7 +69,7 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    void handleConfirm()
+    handleConfirm()
   }
 
   return (
@@ -128,7 +136,9 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
           <label className={fieldLabel}>Category</label>
           <CategoryAutocomplete
             value={category}
-            onChange={setCategory}
+            onChange={(cat) => {
+              setCategory(cat)
+            }}
             inputValue={categoryInputText}
             onInputChange={(text) => {
               setCategoryInputText(text)
@@ -149,7 +159,9 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
             className={btnConfirm}
             disabled={confirmDisabled}
             aria-label="Confirm"
-            onPointerDown={(e) => e.preventDefault()}
+            onPointerDown={(e) => {
+              e.preventDefault()
+            }}
           >
             Confirm
           </button>

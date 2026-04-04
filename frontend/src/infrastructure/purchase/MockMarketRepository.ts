@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { Market } from '@domain/purchase/Market'
 import type { MarketRepository } from '@application/purchase/ports/MarketRepository.port'
 
@@ -37,7 +38,7 @@ export class MockMarketRepository implements MarketRepository {
     address: { street: string; city: string; state: string; zip: string }
   }): Promise<Market> {
     const market: Market = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: input.name,
       address: input.address,
       createdAt: new Date().toISOString(),

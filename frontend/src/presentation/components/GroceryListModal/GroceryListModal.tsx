@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { useState, useEffect, useMemo } from 'react'
 import { Dialog, DialogPanel, DialogTitle, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
 import { XMarkIcon, PencilIcon, TrashIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/20/solid'
@@ -221,7 +222,7 @@ export function GroceryListModal({ open, onClose, initialList }: GroceryListModa
       )
       setEditingItemId(null)
     } else {
-      setItems((prev) => [...prev, { id: crypto.randomUUID(), ...newItem, categoryName }])
+      setItems((prev) => [...prev, { id: uuidv4(), ...newItem, categoryName }])
     }
     setAddingItem(false)
     setItemsError(false)

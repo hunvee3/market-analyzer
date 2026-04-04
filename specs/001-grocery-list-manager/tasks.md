@@ -70,7 +70,7 @@ shared presentation infrastructure — MUST be complete before any user story be
 
 ### Infrastructure Layer — LocalStorage Adapters
 
-- [x] T Implement `LocalStorageGroceryListRepository` in `frontend/src/infrastructure/grocery-list/LocalStorageGroceryListRepository.ts` — reads/writes `smart-basket:v1:grocery-lists` as `GroceryList[]`; on parse error logs via `console.error` and returns `[]`; `create` generates UUID v4 with `crypto.randomUUID()` and sets `createdAt`/`updatedAt`; `update` sets new `updatedAt`
+- [x] T Implement `LocalStorageGroceryListRepository` in `frontend/src/infrastructure/grocery-list/LocalStorageGroceryListRepository.ts` — reads/writes `smart-basket:v1:grocery-lists` as `GroceryList[]`; on parse error logs via `console.error` and returns `[]`; `create` generates UUID v4 with `uuidv4()` (from `uuid` library) and sets `createdAt`/`updatedAt`; `update` sets new `updatedAt`
 - [x] T [P] Implement `LocalStorageCategoryRepository` in `frontend/src/infrastructure/grocery-list/LocalStorageCategoryRepository.ts` — reads/writes `smart-basket:v1:categories`; `create(name)` sets `normalizedName = name.trim().toLowerCase()`; on parse error returns `[]`
 
 ### Dependency Injection
@@ -318,4 +318,5 @@ With two developers after Phase 2 completes:
 
 ## Bugfix: Confirm button unresponsive on mobile after category input blur (BF003)
 
-- [x] T-BF003 Fix mobile Confirm button unresponsive in Add Item dialog — (a) add null guard to `handleSelect` in `CategoryAutocomplete` to prevent crash from Headless UI blur-triggered `onChange(null)`, (b) add `onPointerDown` with `preventDefault` on Confirm button to prevent blur cascade, (c) add `categoryInputTextRef` in `ItemSubForm` as fallback for `categoryFilled` check and `handleConfirm` category resolution. See `specs/001-grocery-list-manager/bugfixes/BF003-category-confirm-mobile-blur.md`. Files: `CategoryAutocomplete.tsx`, `ItemSubForm.tsx` (FR-016)
+- [x] T-BF003a Fix mobile Confirm button unresponsive in Add Item dialog — (a) add null guard to `handleSelect` in `CategoryAutocomplete` to prevent crash from Headless UI blur-triggered `onChange(null)`, (b) add `onPointerDown` with `preventDefault` on Confirm button to prevent blur cascade, (c) add `categoryInputTextRef` in `ItemSubForm` as fallback for `categoryFilled` check and `handleConfirm` category resolution. Files: `CategoryAutocomplete.tsx`, `ItemSubForm.tsx` (FR-016)
+- [x] T-BF003b Replace all `crypto.randomUUID()` calls with `uuid` library v4 (`uuidv4()`) — `crypto.randomUUID()` is unavailable in some mobile browser contexts (non-secure, older WebViews), causing silent failures when creating items/lists/categories. Installed `uuid` + `@types/uuid`. This is a temporary polyfill until the backend generates IDs. Files: `LocalStorageGroceryListRepository.ts`, `LocalStorageCategoryRepository.ts`, `GroceryListModal.tsx`, `MockMarketRepository.ts`, `MockProductRepository.ts`, `MockPurchaseRepository.ts`, `MockProductPriceRecordRepository.ts`, `AssignProduct.usecase.ts` (FR-016)

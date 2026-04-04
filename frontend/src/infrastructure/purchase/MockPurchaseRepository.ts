@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { Purchase, PurchaseItem } from '@domain/purchase/Purchase'
 import type { PurchaseRepository, SavePurchaseInput } from '@application/purchase/ports/PurchaseRepository.port'
 
@@ -6,12 +7,12 @@ export class MockPurchaseRepository implements PurchaseRepository {
 
   async create(input: SavePurchaseInput): Promise<Purchase> {
     const purchase: Purchase = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       groceryListId: input.groceryListId,
       marketId: input.marketId,
       date: input.date,
       items: input.items.map((item): PurchaseItem => ({
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         groceryItemId: item.groceryItemId,
         productId: item.productId,
         quantity: item.quantity,

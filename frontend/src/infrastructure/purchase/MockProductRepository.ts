@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { Product } from '@domain/purchase/Product'
 import type { ProductRepository } from '@application/purchase/ports/ProductRepository.port'
 
@@ -18,7 +19,7 @@ export class MockProductRepository implements ProductRepository {
 
   async create(input: { name: string; barcode: string }): Promise<Product> {
     const product: Product = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: input.name,
       barcode: input.barcode,
       createdAt: new Date().toISOString(),

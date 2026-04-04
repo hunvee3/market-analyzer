@@ -11,7 +11,7 @@ Purchase Mode allows users to register real purchases based on existing grocery 
 ## Technical Context
 
 **Language/Version**: TypeScript ~5.7 (frontend and backend)
-**Primary Dependencies**: React 18, Tailwind CSS v3, Headless UI, Jotai, date-fns (frontend); Fastify, Lucid ORM (backend — new, not yet created)
+**Primary Dependencies**: React 18, Tailwind CSS v3, Headless UI, Jotai, date-fns, uuid (frontend); Fastify, Lucid ORM (backend — new, not yet created)
 **Storage**: localStorage (feature 001 — existing); PostgreSQL (constitution-mandated for backend — new)
 **Testing**: Vitest + React Testing Library (frontend); Jest + Supertest (backend)
 **Target Platform**: PWA — all modern browsers, all viewport sizes
@@ -151,3 +151,11 @@ frontend/src/
 ## Complexity Tracking
 
 No constitution violations to justify.
+
+## Cross-Feature Bugfix: UUID Generation (BF003)
+
+All mock repositories and LocalStorage adapters use `uuid` library v4 (`uuidv4()`)
+instead of `crypto.randomUUID()` for ID generation. `crypto.randomUUID()` is
+unavailable in some mobile browser contexts. The `uuid` dependency is a temporary
+polyfill — when the backend is built, ID generation will move server-side and the
+library can be removed. See `specs/001-grocery-list-manager/plan.md` BF003 for details.

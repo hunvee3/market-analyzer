@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import type { ProductPriceRecord } from '@domain/purchase/ProductPriceRecord'
 import type { ProductPriceRecordRepository } from '@application/purchase/ports/ProductPriceRecordRepository.port'
 
@@ -20,7 +21,7 @@ export class MockProductPriceRecordRepository implements ProductPriceRecordRepos
     }>
   ): Promise<ProductPriceRecord[]> {
     const created = records.map((r): ProductPriceRecord => ({
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       productId: r.productId,
       marketId: r.marketId,
       unitPrice: r.unitPrice,

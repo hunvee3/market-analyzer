@@ -39,7 +39,9 @@ export function CategoryAutocomplete({
       : categories.filter((c) => c.name.toLowerCase().includes(displayText.toLowerCase()))
 
   async function handleSelect(cat: Category | null) {
-    if (!cat) return
+    if (!cat) {
+      return
+    }
     onChange(cat)
     setQuery(cat.name)
     onInputChange?.(cat.name)
@@ -47,7 +49,9 @@ export function CategoryAutocomplete({
 
   return (
     <div className="relative">
-      <Combobox value={value} onChange={handleSelect}>
+      <Combobox value={value} onChange={(cat: Category | null) => {
+        handleSelect(cat)
+      }}>
         <div className="relative">
           <ComboboxInput
             aria-label="Category"

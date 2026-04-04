@@ -340,3 +340,4 @@ Phase 1 (Setup)
 - Constitution II (TDD): Write test → confirm fail → implement → confirm pass → refactor
 - All dialogs: Headless UI `Dialog` with Tailwind dark-first styling
 - PurchaseView: `fixed inset-0 z-40`; dialogs on top: `z-50`
+- All mock repositories use `uuid` v4 (`uuidv4()`) for ID generation — `crypto.randomUUID()` unavailable on some mobile contexts (see BF003 in feature 001 specs)
