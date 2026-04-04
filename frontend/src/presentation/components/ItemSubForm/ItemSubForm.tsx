@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { clsx } from 'clsx'
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
 import { ChevronUpDownIcon } from '@heroicons/react/20/solid'
@@ -26,13 +26,14 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
   const [categoryInputText, setCategoryInputText] = useState(
     initialValues?.category?.name ?? initialValues?.categoryName ?? '',
   )
+  const categoryInputTextRef = useRef(categoryInputText)
   const [attempted, setAttempted] = useState(false)
   const setCategories = useSetAtom(categoriesAtom)
 
   const parsedAmount = parseFloat(amount)
   const nameError = attempted && !name.trim()
   const amountError = attempted && (isNaN(parsedAmount) || parsedAmount <= 0)
-  const categoryFilled = !!category || !!categoryInputText.trim()
+  const categoryFilled = !!category || !!categoryInputText.trim() || !!categoryInputTextRef.current.trim()
   const confirmDisabled = !name.trim() || isNaN(parsedAmount) || parsedAmount <= 0 || !categoryFilled
 
   async function handleConfirm() {
@@ -40,9 +41,10 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
     if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return
 
     let resolvedCategory = category
+    const catText = categoryInputText || categoryInputTextRef.current
 
-    if (!resolvedCategory && categoryInputText.trim()) {
-      resolvedCategory = await createOrReuseCategoryUseCase.execute({ name: categoryInputText.trim() })
+    if (!resolvedCategory && catText.trim()) {
+      resolvedCategory = await createOrReuseCategoryUseCase.execute({ name: catText.trim() })
       setCategories((prev) => {
         const exists = prev.some((c) => c.id === resolvedCategory!.id)
         return exists ? prev : [...prev, resolvedCategory!]
@@ -130,6 +132,7 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
             inputValue={categoryInputText}
             onInputChange={(text) => {
               setCategoryInputText(text)
+              categoryInputTextRef.current = text
               if (category && text.toLowerCase() !== category.name.toLowerCase()) {
                 setCategory(null)
               }
@@ -146,6 +149,7 @@ export function ItemSubForm({ onConfirm, onCancel, initialValues }: ItemSubFormP
             className={btnConfirm}
             disabled={confirmDisabled}
             aria-label="Confirm"
+            onPointerDown={(e) => e.preventDefault()}
           >
             Confirm
           </button>

@@ -63,18 +63,36 @@ giving React time to re-render with the broken state.
 
 ## Fix
 
-Guard `handleSelect` in `CategoryAutocomplete` against `null` values. When Headless UI
-calls `onChange(null)` on blur, simply return early without propagating to the parent.
-This prevents:
+A multi-layered defense that addresses each stage of the Headless UI blur cascade:
 
-1. The runtime error on `null.name`.
-2. Any unintended state changes in `ItemSubForm`.
-3. The Confirm button from being affected by the blur event.
+### 1. Null guard in `handleSelect` (CategoryAutocomplete.tsx)
+
+When Headless UI calls `onChange(null)` on blur, return early without propagating to
+the parent. This prevents the runtime error on `null.name` and any unintended state
+changes.
+
+### 2. `onPointerDown` preventDefault on Confirm button (ItemSubForm.tsx)
+
+Adding `onPointerDown={(e) => e.preventDefault()}` to the Confirm button prevents
+focus from leaving the category input when the button is pressed. This stops the
+entire Combobox blur chain from firing in the first place — the combobox stays open
+(or already closed) and doesn't trigger `onChange(null)` or the `useWatch` DOM clear.
+
+### 3. Ref-backed category text (ItemSubForm.tsx)
+
+A `useRef` mirrors `categoryInputText` state so that even if a render cycle clears the
+state value, the ref preserves the last user-entered text. Both `categoryFilled`
+(which gates the disabled state) and `handleConfirm` (which resolves the category)
+read from the ref as a fallback.
 
 ### Files Changed
 
 - `frontend/src/presentation/components/CategoryAutocomplete/CategoryAutocomplete.tsx`
   — Add null guard to `handleSelect`: `if (!cat) return`.
+- `frontend/src/presentation/components/ItemSubForm/ItemSubForm.tsx`
+  — Add `categoryInputTextRef` ref mirroring `categoryInputText` state.
+  — Use ref as fallback in `categoryFilled` and `handleConfirm`.
+  — Add `onPointerDown={(e) => e.preventDefault()}` on Confirm button.
 
 ## Related Requirements
 
