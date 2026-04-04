@@ -234,6 +234,22 @@ fully controlled and prevents the Combobox from resetting the text on blur.
 
 **Related requirement**: FR-016 — category resolved on Confirm click, not on blur.
 
+## Bugfix: Confirm button unresponsive on mobile after category input blur (BF003)
+
+**Purpose**: On mobile Chrome, tapping the Confirm button in the Add Item form does
+nothing — the button flashes disabled and the item is never created. Caused by
+Headless UI Combobox v2.2.9 calling `onChange(null)` on blur when the combobox is open
+and `value` is `null` (free-text typed). The `handleSelect` function crashes on
+`null.name` (swallowed by async), and the resulting re-render cycle on mobile causes
+the Confirm button tap to be lost.
+
+**Approach**: Add a null guard at the top of `handleSelect`: `if (!cat) return`. This
+prevents the blur-triggered `onChange(null)` from crashing or affecting parent state.
+
+**Files**: `CategoryAutocomplete.tsx`
+
+**Related requirement**: FR-016 — category resolved on Confirm click, not on blur.
+
 ## Complexity Tracking
 
 > No constitution violations to justify. All architectural decisions are compliant.

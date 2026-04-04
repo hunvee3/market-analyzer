@@ -315,3 +315,7 @@ With two developers after Phase 2 completes:
 ## Bugfix: CategoryAutocomplete loses typed text on blur (BF002)
 
 - [x] T-BF002 Fix `CategoryAutocomplete` to preserve typed free-text on blur by replacing `displayValue` with a controlled `value` prop on `ComboboxInput` — prevents Headless UI Combobox from clearing the input when `value` is `null` (new category typed but not yet selected). Fixes mobile tap-to-confirm being blocked because blur event cleared `categoryInputText` before the click event fired on the Confirm button. See `specs/001-grocery-list-manager/bugfixes/BF002-category-autocomplete-blur.md`. Files: `frontend/src/presentation/components/CategoryAutocomplete/CategoryAutocomplete.tsx` (FR-016)
+
+## Bugfix: Confirm button unresponsive on mobile after category input blur (BF003)
+
+- [x] T-BF003 Add null guard to `handleSelect` in `CategoryAutocomplete` — Headless UI Combobox v2.2.9 calls `onChange(null)` on blur when value is already `null` (single mode, free-text typed). Without the guard, `handleSelect` crashes on `null.name` (swallowed by async), and the resulting re-render cycle on mobile causes the Confirm button to become unresponsive. See `specs/001-grocery-list-manager/bugfixes/BF003-category-confirm-mobile-blur.md`. Files: `frontend/src/presentation/components/CategoryAutocomplete/CategoryAutocomplete.tsx` (FR-016)

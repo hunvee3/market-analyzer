@@ -38,7 +38,8 @@ export function CategoryAutocomplete({
       ? categories
       : categories.filter((c) => c.name.toLowerCase().includes(displayText.toLowerCase()))
 
-  async function handleSelect(cat: Category) {
+  async function handleSelect(cat: Category | null) {
+    if (!cat) return
     onChange(cat)
     setQuery(cat.name)
     onInputChange?.(cat.name)
