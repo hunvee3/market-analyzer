@@ -31,7 +31,7 @@ categories shared across all lists for the session user
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 - [x] **Hexagonal Architecture**: Domain / application / infrastructure layers defined for
       frontend. Use cases exist for every operation (GetAllGroceryLists, CreateGroceryList,
@@ -41,15 +41,14 @@ categories shared across all lists for the session user
       descriptions follow Given/When/Then. Tests written and confirmed failing first.
 - [x] **Error Handling**: Snackbar for API/network errors. Inline field-level errors for
       validation. No custom error shapes outside defined contracts.
-- [x] **Frontend Stack**: React 18 + TypeScript + Tailwind CSS v3 + Headless UI + Heroicons
-      + clsx/tailwind-merge + date-fns v3 + **Jotai** (state management — Zustand is prohibited
+- [x] **Frontend Stack**: React 18 + TypeScript + Tailwind CSS v3 + Headless UI + Heroicons + clsx/tailwind-merge + date-fns v3 + **Jotai** (state management — Zustand is prohibited
       per constitution v1.1.0). Dark-first design, class-name constant styling rule enforced.
       Mock API via localStorage adapter per constitution mock-first rule.
 - [-] **Backend Stack**: Not applicable for this phase (frontend only).
 - [x] **Branching**: Feature branch to be renamed `feature/001-grocery-list-manager` per Git
       Flow naming convention (see T047); `develop` branch to be created before first PR merge.
 
-*Post-design re-check: All gates still pass. See research.md for technology decisions.*
+_Post-design re-check: All gates still pass. See research.md for technology decisions._
 
 ## Project Structure
 
@@ -155,28 +154,33 @@ These decisions were made and validated during implementation. Future features e
 this codebase MUST follow these patterns.
 
 ### GroceryListModal is always full-screen
+
 The Headless UI `Dialog` panel uses `fixed inset-0 bg-gray-950 z-50 flex flex-col`
 unconditionally — not just on mobile breakpoints. This was confirmed as the desired UX.
 
 ### ItemSubForm opens as a Dialog, not inline
+
 The item add/edit form renders inside a separate Headless UI `Dialog` (max-width `sm`,
 not full-screen) layered above the list modal. The `ItemSubForm` component itself contains
 no extra wrapper or `scrollIntoView` logic. `addingItem` state in `GroceryListModal`
 controls both the dialog's `open` prop and which title to show ("Add Item" / "Edit Item").
 
 ### categoriesAtom is the single source of truth for categories
+
 `GroceryListModal` reads categories directly from `useAtom(categoriesAtom)` — there is
 no local `categoriesLocal` state. `CategoryAutocomplete` and `ItemSubForm` both write new
 categories to `categoriesAtom` via `useSetAtom`. This eliminates divergence between
 local and global state when categories are created on the fly.
 
 ### onConfirm(item, categoryName) — two-arg contract
+
 `ItemSubForm.onConfirm` passes `(NewItemInput, categoryName: string)` rather than just
 `(NewItemInput)`. The parent `GroceryListModal` uses the `categoryName` directly
 (no atom lookup) to avoid a race condition where `setCategories(atom)` is called but
 the parent renders before the atom update propagates.
 
 ### Category confirmation deferred to submit
+
 The Confirm button in the item dialog is enabled as soon as the category field contains
 any non-empty text — it is NOT gated on the user pressing Enter in the Autocomplete
 dropdown. `handleConfirm` in `ItemSubForm` calls `createOrReuseCategoryUseCase` with the
@@ -184,21 +188,26 @@ raw typed text if no `Category` object is selected. Changing typed text clears t
 currently selected `Category` state to force re-resolution on next submit.
 
 ### Category sections are collapsible
+
 `GroceryListModal` uses Headless UI `Disclosure` for each category group, defaulting to
 open. The disclosure button shows item count + `ChevronDownIcon` (rotated on open via
 `rotate-180` class). Edit/delete icon buttons call `e.stopPropagation()` to avoid
 triggering the disclosure toggle.
 
 ### Item separation within category groups
+
 Items inside a Disclosure panel are wrapped in a `<div className="flex flex-col gap-2">`
 for visual spacing.
 
 ### jsdom scrollIntoView polyfill required in tests
+
 jsdom does not implement `Element.prototype.scrollIntoView`. The `frontend/tests/setup.ts`
 file MUST include:
+
 ```ts
-window.HTMLElement.prototype.scrollIntoView = () => {}
+window.HTMLElement.prototype.scrollIntoView = () => {};
 ```
+
 Any component that calls `scrollIntoView` in a `useEffect` will throw in jsdom without this.
 
 ## Bugfix: Responsive "Create New List" Button
@@ -208,6 +217,22 @@ Any component that calls `scrollIntoView` in a `useEffect` will throw in jsdom w
 **Approach**: Render two elements — an icon button with `sm:hidden` and the text button with `hidden sm:inline-flex`. Both share the same `onClick` handler. Uses `PlusIcon` from `@heroicons/react/20/solid`.
 
 **Files**: `DashboardPage.styles.ts`, `DashboardPage.tsx`
+
+## Bugfix: CategoryAutocomplete loses typed text on blur (BF002)
+
+**Purpose**: On blur, Headless UI's `Combobox` resets input text via `displayValue`.
+When `value` is `null` (user typed a new category name without selecting from dropdown),
+`displayValue` returns `''`, clearing the visible input. On mobile, tapping the Confirm
+button triggers blur before click, which clears `categoryInputText` in `ItemSubForm`,
+disabling the button before the tap event completes.
+
+**Approach**: Replace `displayValue` on `ComboboxInput` with a controlled `value` prop
+that uses the parent-provided `inputValue` / internal `query` state. This makes the input
+fully controlled and prevents the Combobox from resetting the text on blur.
+
+**Files**: `CategoryAutocomplete.tsx`
+
+**Related requirement**: FR-016 — category resolved on Confirm click, not on blur.
 
 ## Complexity Tracking
 

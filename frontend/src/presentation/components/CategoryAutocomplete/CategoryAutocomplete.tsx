@@ -31,13 +31,16 @@ export function CategoryAutocomplete({
   const [categories, setCategories] = useAtom(categoriesAtom)
   const [query, setQuery] = useState(inputValue ?? '')
 
+  const displayText = inputValue ?? query
+
   const filtered =
-    query.trim() === ''
+    displayText.trim() === ''
       ? categories
-      : categories.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+      : categories.filter((c) => c.name.toLowerCase().includes(displayText.toLowerCase()))
 
   async function handleSelect(cat: Category) {
     onChange(cat)
+    setQuery(cat.name)
     onInputChange?.(cat.name)
   }
 
@@ -48,7 +51,7 @@ export function CategoryAutocomplete({
           <ComboboxInput
             aria-label="Category"
             className={inputCls}
-            displayValue={(cat: Category | null) => cat?.name ?? ''}
+            value={displayText}
             placeholder="Category"
             onChange={(e) => {
               const text = e.target.value
