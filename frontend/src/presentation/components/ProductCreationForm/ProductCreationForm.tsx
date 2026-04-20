@@ -30,11 +30,13 @@ interface ProductCreationFormProps {
   onCreated: (product: Product) => void
   onDuplicateFound: (product: Product) => void
   onCancel: () => void
+  /** Pre-populate the barcode field (e.g., from a previous scan or manual entry) */
+  initialBarcode?: string
 }
 
-export function ProductCreationForm({ onCreated, onDuplicateFound, onCancel }: ProductCreationFormProps) {
+export function ProductCreationForm({ onCreated, onDuplicateFound, onCancel, initialBarcode = '' }: ProductCreationFormProps) {
   const [name, setName] = useState('')
-  const [barcode, setBarcode] = useState('')
+  const [barcode, setBarcode] = useState(initialBarcode)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [suggestions, setSuggestions] = useState<Product[]>([])
   const [duplicateProduct, setDuplicateProduct] = useState<Product | null>(null)
@@ -104,6 +106,8 @@ export function ProductCreationForm({ onCreated, onDuplicateFound, onCancel }: P
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter product name"
           className={errors.name ? fieldInputError : fieldInput}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
+          autoFocus
         />
         {errors.name && <p className={fieldError}>{errors.name}</p>}
         {suggestions.length > 0 && !duplicateProduct && (

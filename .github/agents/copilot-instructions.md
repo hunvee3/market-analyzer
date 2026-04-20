@@ -1,6 +1,6 @@
 # market-analyser Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-02
+Auto-generated from all feature plans. Last updated: 2026-04-10
 
 ## Active Technologies
 

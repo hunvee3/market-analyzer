@@ -25,3 +25,9 @@ export const histPriceDisclaimer = 'text-xs text-gray-500 mt-1 italic'
 export const formActions = 'flex gap-3 pt-2'
 export const btnCancel = 'flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors'
 export const btnConfirm = 'flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+
+// Scan / barcode lookup styles (added by 003-barcode-lookup)
+export const scanViewWrapper = 'space-y-3'
+export const scanFallbackBanner = 'flex items-start gap-2 rounded-xl bg-gray-800/70 border border-gray-700 px-4 py-3 text-sm text-gray-300'
+export const scanNoMatchBanner = 'rounded-xl bg-amber-900/30 border border-amber-700/50 px-4 py-2.5 text-sm text-amber-300'
+export const scanToggleBtn = 'w-full rounded-xl px-4 py-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-700 hover:border-indigo-500'

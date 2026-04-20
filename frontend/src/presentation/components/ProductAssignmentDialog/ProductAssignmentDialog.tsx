@@ -10,6 +10,10 @@ import { GetLastProductPriceUseCase } from '@application/purchase/use-cases/GetL
 import { productRepository, productPriceRecordRepository } from '@di/container'
 import { formatPrice } from '@presentation/utils/formatPrice'
 import { ProductCreationForm } from '@presentation/components/ProductCreationForm/ProductCreationForm'
+import { BarcodeScannerView } from '@presentation/components/BarcodeScannerView/BarcodeScannerView'
+import type { FallbackReason } from '@presentation/components/BarcodeScannerView/BarcodeScannerView'
+import { detectMobileDevice } from '@presentation/utils/detectMobileDevice'
+import { barcodeDecoder } from '@di/container'
 import {
   dialogBackdrop,
   dialogContainer,
@@ -38,6 +42,7 @@ import {
   formActions,
   btnCancel,
   btnConfirm,
+  scanFallbackBanner,
 } from './ProductAssignmentDialog.styles'
 
 const searchProductsUseCase = new SearchProductsUseCase(productRepository)
@@ -78,6 +83,11 @@ export function ProductAssignmentDialog({
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [attempted, setAttempted] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [cameraError, setCameraError] = useState<FallbackReason | null>(null)
+  const [cameraDetected, setCameraDetected] = useState(false)
+  // Barcode query is preserved when switching to the name tab so it's restored on return
+  const [barcodeQuery, setBarcodeQuery] = useState('')
 
   const performSearch = useCallback(async (q: string, strategy: 'name' | 'barcode') => {
     const found = await searchProductsUseCase.execute({ query: q, strategy })
@@ -87,23 +97,46 @@ export function ProductAssignmentDialog({
   useEffect(() => {
     if (!open) return
     setQuery('')
+    setBarcodeQuery('')
     setResults([])
     setLastPrice(null)
     setShowDisclaimer(false)
     setAttempted(false)
     setSearchStrategy('name')
     setShowCreateForm(false)
+    setCameraDetected(false)
+    setCameraError(null)
 
     if (existingAssignment) {
       setSelectedProduct({ id: existingAssignment.productId, name: existingAssignment.productName, barcode: '', createdAt: '' })
       setQuantity(existingAssignment.quantity.toString())
       setUnitPrice(existingAssignment.unitPrice.toString())
+      setIsMobile(false)
     } else {
       setSelectedProduct(null)
       setQuantity(prefill?.amount?.toString() ?? '1')
       setUnitPrice('')
+      const mobile = detectMobileDevice()
+      setIsMobile(mobile)
+      setSearchStrategy(mobile ? 'barcode' : 'name')
     }
   }, [open, existingAssignment, prefill])
+
+  // When switching tabs: save/restore barcode query, clear name query
+  useEffect(() => {
+    setCameraDetected(false)
+    setCameraError(null)
+    if (searchStrategy === 'name') {
+      // preserve whatever was in the barcode input before clearing it from view
+      setQuery('')
+    } else {
+      // restore the previously scanned/typed barcode value
+      setQuery(barcodeQuery)
+    }
+    setResults([])
+  // barcodeQuery intentionally excluded — only run on strategy change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchStrategy])
 
   useEffect(() => {
     if (!open || selectedProduct) return
@@ -160,6 +193,7 @@ export function ProductAssignmentDialog({
           {/* Product Search (hidden when product already selected) */}
           {!selectedProduct && (
             <>
+              {/* Search strategy tabs */}
               <div className={searchToggle}>
                 <button
                   className={clsx(searchToggleBtn, searchStrategy === 'name' ? searchToggleActive : searchToggleInactive)}
@@ -175,14 +209,57 @@ export function ProductAssignmentDialog({
                 </button>
               </div>
 
+              {/* Camera scanner — embedded in By Barcode tab (mobile only, hides after detection or on error) */}
+              {searchStrategy === 'barcode' && isMobile && !cameraError && !cameraDetected && (
+                <BarcodeScannerView
+                  decoder={barcodeDecoder}
+                  onDetected={(barcode) => {
+                    setCameraDetected(true)
+                    setQuery(barcode)
+                    setBarcodeQuery(barcode)
+                    void (async () => {
+                      const found = await searchProductsUseCase.execute({ query: barcode, strategy: 'barcode' })
+                      setResults(found)
+                      if (found.length > 0) {
+                        await handleSelectProduct(found[0])
+                      }
+                    })()
+                  }}
+                  onFallback={(reason) => setCameraError(reason)}
+                />
+              )}
+
+              {/* Camera error / interruption banner */}
+              {searchStrategy === 'barcode' && cameraError && (
+                <div role="alert" className={scanFallbackBanner}>
+                  <span className="flex-1">
+                    {cameraError === 'permission_denied' && 'Camera access is unavailable. Enable it in device settings to scan barcodes.'}
+                    {(cameraError === 'no_camera' || cameraError === 'error') && 'Camera could not be accessed.'}
+                    {cameraError === 'timeout' && 'Camera took too long to start.'}
+                    {cameraError === 'mid_session_error' && 'Camera was interrupted.'}
+                  </span>
+                  <button
+                    type="button"
+                    className="ml-2 shrink-0 text-indigo-400 hover:text-indigo-300 text-xs font-medium underline-offset-2 hover:underline"
+                    onClick={() => setCameraError(null)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {/* Text input — always visible in both tabs */}
               <input
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  if (searchStrategy === 'barcode') setBarcodeQuery(e.target.value)
+                }}
                 placeholder={searchStrategy === 'name' ? 'Search product name...' : 'Enter barcode...'}
                 aria-label="Search products"
                 className={searchInput}
-                autoFocus
+                autoFocus={searchStrategy === 'name'}
               />
 
               <div className={productList} role="list">
@@ -311,6 +388,7 @@ export function ProductAssignmentDialog({
             </button>
           </div>
           <ProductCreationForm
+            initialBarcode={searchStrategy === 'barcode' ? query : undefined}
             onCreated={(product) => {
               setShowCreateForm(false)
               void handleSelectProduct(product)
