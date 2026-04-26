@@ -12,6 +12,8 @@ import { PurchaseSummaryBar } from '@presentation/components/PurchaseSummaryBar/
 import { ProductAssignmentDialog } from '@presentation/components/ProductAssignmentDialog/ProductAssignmentDialog'
 import { UnsavedChangesDialog } from '@presentation/components/UnsavedChangesDialog/UnsavedChangesDialog'
 import { AssignProductUseCase } from '@application/purchase/use-cases/AssignProduct.usecase'
+import { GetLastProductPriceUseCase } from '@application/purchase/use-cases/GetLastProductPrice.usecase'
+import { productPriceRecordRepository } from '@di/container'
 import { useSnackbar } from '@presentation/context/SnackbarContext'
 import {
   fullScreenPanel,
@@ -56,6 +58,7 @@ const CATEGORY_ACCENTS = [
 ]
 
 const assignProductUseCase = new AssignProductUseCase()
+const getLastPriceUseCase = new GetLastProductPriceUseCase(productPriceRecordRepository)
 
 function getAccent(categoryName: string, allNames: string[]) {
   const idx = allNames.indexOf(categoryName)
@@ -96,6 +99,8 @@ export function PurchaseView({
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [exitDialogOpen, setExitDialogOpen] = useState(false)
   const [productNameMap, setProductNameMap] = useState<Map<string, string>>(new Map())
+  // Maps groceryItemId → last recorded unit price (for showing diff)
+  const [lastPriceMap, setLastPriceMap] = useState<Map<string, number>>(new Map())
   const [mismatchDialogOpen, setMismatchDialogOpen] = useState(false)
   const [saveConfirmDialogOpen, setSaveConfirmDialogOpen] = useState(false)
   const [mismatches, setMismatches] = useState<{ unassigned: string[]; quantityDiffs: { name: string; listAmount: number; listUnit: string; purchaseQty: number; purchaseUnit: string }[] }>({ unassigned: [], quantityDiffs: [] })
@@ -173,6 +178,13 @@ export function PurchaseView({
     try {
       // Track product name for display
       setProductNameMap((prev) => new Map(prev).set(assigningItemId, data.productName))
+
+      // Fetch last known price for diff display (fire-and-forget on top of the main flow)
+      void getLastPriceUseCase.execute({ productId: data.productId }).then((record) => {
+        if (record) {
+          setLastPriceMap((prev) => new Map(prev).set(assigningItemId, record.unitPrice))
+        }
+      })
 
       if (editingItemId) {
         // Update existing assignment
@@ -281,6 +293,11 @@ export function PurchaseView({
                           <div className={itemsGroupBody}>
                             {catItems.map((item) => {
                               const assignment = assignedMap.get(item.id)
+                              const lastPriceEntry = lastPriceMap.get(item.id)
+                              const priceDiff = assignment && lastPriceEntry
+                                ? assignment.unitPrice - lastPriceEntry
+                                : null
+
                               return assignment ? (
                                 <div key={item.id} className={clsx(itemRowAssigned, accent.border)}>
                                   <div className={assignedTopRow}>
@@ -300,6 +317,11 @@ export function PurchaseView({
                                     </span>
                                     <div className={assignedPriceRow}>
                                       <span className={assignedPriceLabel}>Unit: {formatPrice(assignment.unitPrice)}</span>
+                                      {priceDiff !== null && priceDiff !== 0 && (
+                                        <span className={priceDiff > 0 ? 'text-xs text-rose-400 font-medium' : 'text-xs text-emerald-400 font-medium'}>
+                                          {priceDiff > 0 ? '+' : ''}{formatPrice(priceDiff)}
+                                        </span>
+                                      )}
                                       <span className={assignedPriceTotal}>Total: {formatPrice(assignment.quantity * assignment.unitPrice)}</span>
                                     </div>
                                   </div>
